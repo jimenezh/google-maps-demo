@@ -109,6 +109,8 @@ public class MapDemoActivity extends AppCompatActivity implements GoogleMap.OnMa
             MapDemoActivityPermissionsDispatcher.startLocationUpdatesWithPermissionCheck(this);
             // Setting on long click listener
             map.setOnMapLongClickListener(this);
+            // Sets up custom window
+            map.setInfoWindowAdapter(new CustomWindowAdapter(getLayoutInflater()));
         } else {
             Toast.makeText(this, "Error - Map was null!!", Toast.LENGTH_SHORT).show();
         }
