@@ -1,6 +1,7 @@
 package com.example.mapdemo;
 
 import android.Manifest;
+import android.annotation.SuppressLint;
 import android.app.Dialog;
 import android.location.Location;
 import android.os.Bundle;
@@ -58,22 +59,24 @@ public class MapDemoActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.map_demo_activity);
-
+        // Checks that there is an API key
         if (TextUtils.isEmpty(getResources().getString(R.string.google_maps_api_key))) {
             throw new IllegalStateException("You forgot to supply a Google Maps API key");
         }
-
+        // savedInstanceState holds a Bundle saved during previous state
+        // This checks if anything was saved, and, if so, gets the saved location
         if (savedInstanceState != null && savedInstanceState.keySet().contains(KEY_LOCATION)) {
             // Since KEY_LOCATION was found in the Bundle, we can be sure that mCurrentLocation
             // is not null.
             mCurrentLocation = savedInstanceState.getParcelable(KEY_LOCATION);
         }
-
+        // Initializing map fragment + checking that it's valid + loading map
+        // Q: in what situation would the map fragment be null??
         mapFragment = ((SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map));
         if (mapFragment != null) {
-            mapFragment.getMapAsync(new OnMapReadyCallback() {
+            mapFragment.getMapAsync(new OnMapReadyCallback() { // Load the map once it is ready (callback)
                 @Override
-                public void onMapReady(GoogleMap map) {
+                public void onMapReady(GoogleMap map) { // map is the result, loadMap binds it to our own map
                     loadMap(map);
                 }
             });
@@ -83,11 +86,14 @@ public class MapDemoActivity extends AppCompatActivity {
 
     }
 
+    // Binds the resulting GoogleMap to the map field of the class + requests permission for location + gets location
+    // + starts location updates
     protected void loadMap(GoogleMap googleMap) {
         map = googleMap;
         if (map != null) {
             // Map is ready
             Toast.makeText(this, "Map Fragment was loaded properly!", Toast.LENGTH_SHORT).show();
+            // Q: Where is this generated class being generated???? Is it from the annotation?
             MapDemoActivityPermissionsDispatcher.getMyLocationWithPermissionCheck(this);
             MapDemoActivityPermissionsDispatcher.startLocationUpdatesWithPermissionCheck(this);
         } else {
@@ -95,23 +101,27 @@ public class MapDemoActivity extends AppCompatActivity {
         }
     }
 
+    // Q: Overriding methods of AppCompat by adding MapDemo stuff too?
     @Override
     public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         MapDemoActivityPermissionsDispatcher.onRequestPermissionsResult(this, requestCode, grantResults);
     }
 
+    // Implements methods called by generated class
     @SuppressWarnings({"MissingPermission"})
     @NeedsPermission({Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION})
     void getMyLocation() {
+        // Settings on GoogleMap object. To get location?
         map.setMyLocationEnabled(true);
         map.getUiSettings().setMyLocationButtonEnabled(true);
-
+        // Code to get location. From Google API?
         FusedLocationProviderClient locationClient = getFusedLocationProviderClient(this);
         locationClient.getLastLocation()
                 .addOnSuccessListener(new OnSuccessListener<Location>() {
                     @Override
                     public void onSuccess(Location location) {
+                        // Now that we have the location, we go to this function
                         if (location != null) {
                             onLocationChanged(location);
                         }
@@ -141,7 +151,7 @@ public class MapDemoActivity extends AppCompatActivity {
     protected void onStop() {
         super.onStop();
     }
-
+    // Is this for emulator?
     private boolean isGooglePlayServicesAvailable() {
         // Check that Google Play services is available
         int resultCode = GooglePlayServicesUtil.isGooglePlayServicesAvailable(this);
@@ -184,13 +194,16 @@ public class MapDemoActivity extends AppCompatActivity {
         MapDemoActivityPermissionsDispatcher.startLocationUpdatesWithPermissionCheck(this);
     }
 
+    // Overriding/implementing methods called by the generated class
+    @SuppressLint("MissingPermission")
     @NeedsPermission({Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION})
     protected void startLocationUpdates() {
+        // Setting parameters for request
         mLocationRequest = new LocationRequest();
         mLocationRequest.setPriority(LocationRequest.PRIORITY_BALANCED_POWER_ACCURACY);
         mLocationRequest.setInterval(UPDATE_INTERVAL);
         mLocationRequest.setFastestInterval(FASTEST_INTERVAL);
-
+        // Q: what is a builder????
         LocationSettingsRequest.Builder builder = new LocationSettingsRequest.Builder();
         builder.addLocationRequest(mLocationRequest);
         LocationSettingsRequest locationSettingsRequest = builder.build();
@@ -207,6 +220,7 @@ public class MapDemoActivity extends AppCompatActivity {
                 Looper.myLooper());
     }
 
+    // Updates location on UI
     public void onLocationChanged(Location location) {
         // GPS may be turned off
         if (location == null) {
@@ -221,7 +235,7 @@ public class MapDemoActivity extends AppCompatActivity {
                 Double.toString(location.getLongitude());
         Toast.makeText(this, msg, Toast.LENGTH_SHORT).show();
     }
-
+    // Creates bundle to save location
     public void onSaveInstanceState(Bundle savedInstanceState) {
         savedInstanceState.putParcelable(KEY_LOCATION, mCurrentLocation);
         super.onSaveInstanceState(savedInstanceState);
