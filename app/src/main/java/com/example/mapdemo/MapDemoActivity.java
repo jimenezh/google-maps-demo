@@ -3,14 +3,19 @@ package com.example.mapdemo;
 import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.Dialog;
+import android.content.DialogInterface;
 import android.location.Location;
 import android.os.Bundle;
 import android.os.Looper;
 import android.text.TextUtils;
 import android.util.Log;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.widget.EditText;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.DialogFragment;
 
@@ -28,7 +33,11 @@ import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.BitmapDescriptor;
+import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.Marker;
+import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 
@@ -140,7 +149,7 @@ public class MapDemoActivity extends AppCompatActivity implements GoogleMap.OnMa
 
     /*
      * Called when the Activity becomes visible.
-    */
+     */
     @Override
     protected void onStart() {
         super.onStart();
@@ -148,11 +157,12 @@ public class MapDemoActivity extends AppCompatActivity implements GoogleMap.OnMa
 
     /*
      * Called when the Activity is no longer visible.
-	 */
+     */
     @Override
     protected void onStop() {
         super.onStop();
     }
+
     // Is this for emulator?
     private boolean isGooglePlayServicesAvailable() {
         // Check that Google Play services is available
@@ -237,6 +247,7 @@ public class MapDemoActivity extends AppCompatActivity implements GoogleMap.OnMa
                 Double.toString(location.getLongitude());
         Toast.makeText(this, msg, Toast.LENGTH_SHORT).show();
     }
+
     // Creates bundle to save location
     public void onSaveInstanceState(Bundle savedInstanceState) {
         savedInstanceState.putParcelable(KEY_LOCATION, mCurrentLocation);
@@ -244,8 +255,53 @@ public class MapDemoActivity extends AppCompatActivity implements GoogleMap.OnMa
     }
 
     @Override
-    public void onMapLongClick(LatLng latLng) {
+    public void onMapLongClick(LatLng point) {
         Toast.makeText(this, "Long Press", Toast.LENGTH_LONG).show();
+        showAlertDialogForPoint(point);
+    }
+
+    private void showAlertDialogForPoint(final LatLng point) {
+        View messageView = LayoutInflater.from(MapDemoActivity.this).inflate(R.layout.message_item, null);
+        // Create alert dialog builder
+        AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(this);
+        // set message_item.xml to AlertDialog builder
+        alertDialogBuilder.setView(messageView);
+
+        // Create alert dialog
+        final AlertDialog alertDialog = alertDialogBuilder.create();
+
+        // Configure dialog button (OK)
+        alertDialog.setButton(DialogInterface.BUTTON_POSITIVE, "OK",
+                new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        // Define color of marker icon
+                        BitmapDescriptor defaultMarker =
+                                BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN);
+                        // Extract content from alert dialog
+                        String title = ((EditText) alertDialog.findViewById(R.id.etTitle)).
+                                getText().toString();
+                        String snippet = ((EditText) alertDialog.findViewById(R.id.etSnippet)).
+                                getText().toString();
+                        // Creates and adds marker to the map
+                        Marker marker = map.addMarker(new MarkerOptions()
+                                .position(point)
+                                .title(title)
+                                .snippet(snippet)
+                                .icon(defaultMarker));
+                    }
+                });
+
+        // Configure dialog button (Cancel)
+        alertDialog.setButton(DialogInterface.BUTTON_NEGATIVE, "Cancel",
+                new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int id) {
+                        dialog.cancel();
+                    }
+                });
+
+        // Display the dialog
+        alertDialog.show();
     }
 
     // Define a DialogFragment that displays the error dialog
